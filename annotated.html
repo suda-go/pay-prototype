@@ -274,19 +274,22 @@
       <div class="statusbar"><span>9:41</span><span class="sb-right">📶 🛜 🔋</span></div>
       <div class="cs-header"><div class="cs-balance" data-node="余额"><span class="balance-num">500</span><img class="blue-gem" src="assets/gem.png"></div></div>
       <div class="content" style="overflow:hidden;">
-        <div class="promo" data-node="宣传Banner">宣传 banner ✕</div>
-        <div class="limited" data-node="限量首充卡">仅限首充 · 1000💎 / US$0.99</div>
+        <div class="limited" data-node="限量首充卡" style="justify-content:space-between;padding:0 14px">
+          <div style="font-size:22px;font-weight:800;line-height:1.05">70%<br><span style="font-size:13px">OFF</span></div>
+          <div style="text-align:center"><div style="font-size:15px;font-weight:800">仅限首次购买</div><div style="font-size:13px">1000💎 · <s style="opacity:.7">$3.99</s> <b>$0.99</b></div></div>
+          <div style="font-size:30px">🎁</div>
+        </div>
         <div class="grid" data-node="商品档位">
           <div class="pcell"><div class="amt">500💎</div><div class="bonus">+100</div><div class="price">0.99$</div></div>
-          <div class="pcell"><div class="amt">500💎</div><div class="bonus">+100</div><div class="price">0.99$</div></div>
-          <div class="pcell"><div class="amt">500💎</div><div class="bonus">+100</div><div class="price">0.99$</div></div>
+          <div class="pcell"><div class="amt">1200💎</div><div class="bonus">+300</div><div class="price">1.99$</div></div>
+          <div class="pcell"><div class="amt">3000💎</div><div class="bonus">+900</div><div class="price">4.99$</div></div>
         </div>
         <div class="mini-sheet" data-node="支付面板">
-          <div class="ms-head"><div class="ms-icon">A</div><div><div class="ms-title">App Store</div><div class="ms-sub">apple_id@icloud.com</div></div></div>
+          <div class="ms-head"><div class="ms-icon">A</div><div><div class="ms-title">Apple IAP / Google Play / Mi Pay</div><div class="ms-sub">三渠道原生支付</div></div></div>
           <div class="ms-row"><span>500💎 礼包</span><span>¥6.00</span></div>
-          <div class="ms-face"><div class="fid">😊</div>双击侧边按钮以确认</div>
+          <div class="ms-face"><div class="fid">😊</div>确认支付</div>
         </div>
-        <p class="legal2">购买即代表同意《用户协议》。订阅到期自动续费，可随时取消。</p>
+        <p class="legal2">购买即代表同意《用户协议》。支付走平台官方通道。</p>
       </div>
     </div>
   </div>
@@ -519,16 +522,16 @@
       state = { notes: [] };
       clearDom();
       const defs = [
-        { node:'蓝钻余额', color:'#2f7bff', x:8,   y:90,  title:'蓝钻余额', body:'基础货币展示（千分位）。本期不改充值逻辑，仅作展示对照。' },
-        { node:'金钻入口', color:'#f5a623', x:8,   y:250, title:'金钻充值入口 ★', body:'本期核心。蓝钻数字之后，金色钻石+橙色「+」角标。点击直达收银台发起充值。' },
-        { node:'任务中心', color:'#2f7bff', x:8,   y:430, title:'任务 / 商城入口', body:'任务中心做留存；商城「进入」同样跳转收银台，作第二充值入口。' },
-        { node:'底部导航', color:'#7e879c', x:8,   y:600, title:'底部导航', body:'首页 / 多人 / 工具 / 我的，全局切换，当前高亮「多人」。' },
-        { node:'好友',     color:'#7e879c', x:700, y:80,  title:'好友入口', body:'社交关系入口（本期不展开）。' },
-        { node:'游戏卡',   color:'#2f7bff', x:700, y:560, title:'Battle 游戏卡', body:'游戏曝光与「开始」入口，承接金钻消费场景（后续打通）。' },
-        { node:'宣传Banner', color:'#ff5d8f', x:1450, y:80,  title:'宣传 Banner', body:'运营位，可关闭；关闭后下方内容自动上移。' },
-        { node:'限量首充卡', color:'#ff5d8f', x:1450, y:230, title:'限量首充卡', body:'仅限首次购买的高性价比礼包，刺激首充转化。' },
-        { node:'商品档位',  color:'#27ae60', x:1450, y:400, title:'商品档位', body:'多档礼包（如 500💎+100 / 0.99$）。点击发起购买，未登录先拦截登录。' },
-        { node:'支付面板',  color:'#8a6bff', x:1450, y:580, title:'支付确认面板', body:'iOS：App Store + Face ID 双击确认；Android：Google Play + 购买。成功后余额累加并提示到账。' },
+        { node:'蓝钻余额', color:'#2f7bff', x:8,   y:90,  title:'蓝钻余额', body:'**基础虚拟货币**，仅展示当前余额（千分位）。\n\n> 本期不涉及充值流程改动，仅作展示对照。' },
+        { node:'金钻入口', color:'#f5a623', x:8,   y:240, title:'金钻充值入口 ★（PRD 5.1）', body:'> **本期核心**\n\n位置：**蓝钻数字之后**新增金钻显示\n- 样式：钻石 LOGO + 余额数字（**千分位**）\n- 交互：**LOGO 和数字均可点击** → 跳转收银台进入充值\n\n⚠️ **Getapps** 支付仅部分国家支持：不支持的国家**不展示**该入口' },
+        { node:'任务中心', color:'#7e879c', x:8,   y:440, title:'任务 / 商城（本期不改）', body:'游戏中心既有模块，*本期不涉及改动*。' },
+        { node:'底部导航', color:'#7e879c', x:8,   y:600, title:'底部导航（本期不改）', body:'首页 / 多人 / 工具 / 我的，全局切换。' },
+        { node:'好友',     color:'#7e879c', x:700, y:80,  title:'好友入口（本期不改）', body:'社交关系入口，*本期不展开*。' },
+        { node:'游戏卡',   color:'#2f7bff', x:700, y:560, title:'游戏列表（本期不改）', body:'游戏曝光与「开始」入口，承接金钻**消费场景**（后续打通）。' },
+        { node:'余额',     color:'#f5a623', x:1450, y:60,  title:'收银台顶部 · 金钻余额', body:'顶部展示用户当前**金钻余额**（样式同首页入口）。\n\n支付成功后**实时刷新**余额数字。' },
+        { node:'限量首充卡', color:'#ff5d8f', x:1450, y:210, title:'限时优惠 · 首充卡（PRD 5.2.1）', body:'**仅首充**：仅对历史从未成功购买金钻的用户展示。\n- 左：折扣力度，如 `70% OFF`\n- 中：钻石数量 + 原价 + 折扣价\n- 右：占位图\n\n购买成功后该入口**消失**（刷新页面）。全区域可点击拉起支付。' },
+        { node:'商品档位',  color:'#27ae60', x:1450, y:400, title:'商品区（PRD 5.2.1）', body:'进入页面常驻展示，**按金额由低到高**排序：\n- 钻石金额（标准 + 赠送）\n- 钻石 LOGO\n- 价格\n\n全部可点击拉起支付。**商品支持后台配置**。' },
+        { node:'支付面板',  color:'#8a6bff', x:1450, y:560, title:'支付面板 · 三渠道（PRD 5.2.2/5.2.3）', body:'点击商品先校验登录：\n- **未登录**：toast「请登录后购买」→ 系统登录 → 自动续购\n- **已登录**：直接拉起支付\n\n三渠道原生支付：\n1. **Apple IAP**（iOS）\n2. **Google Play**（Android）\n3. **Mi Pay / Getapps**（小米商店）\n\n结果：成功→回收银台刷新余额；失败/取消→toast「购买失败，请重试」「交易取消」。' },
       ];
       defs.forEach(d => {
         const target = board.querySelector(`[data-node="${d.node}"]`);
