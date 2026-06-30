@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金钻充值 · 可编辑交互标注板</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "SF Pro Text", "PingFang SC", "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 30% 8%, #232539 0%, #14151f 60%, #0d0e15 100%);
+    color: #e8eaf2;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* ===== 顶部工具条 ===== */
+  .toolbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 20px;
+    background: rgba(18,19,28,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(120,130,180,0.2);
+  }
+  .toolbar .title { font-size: 15px; font-weight: 800; margin-right: 6px; }
+  .toolbar .title small { display:block; font-size:11px; font-weight:500; color:#8a90a6; }
+  .btn {
+    border: 1px solid rgba(140,150,200,0.3);
+    background: #2a2c3a; color: #e8eaf2;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 14px; border-radius: 10px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #353849; }
+  .btn.primary { background: linear-gradient(135deg,#f5b324,#f59a00); color:#3a2a00; border:none; }
+  .btn.blue { background: linear-gradient(135deg,#3f9bff,#2f7bff); color:#fff; border:none; }
+  .btn.ghost { background: transparent; }
+  .spacer { flex: 1; }
+  .tip { font-size: 11px; color: #7e879c; }
+
+  /* ===== 讲解板 ===== */
+  .board {
+    position: relative;
+    width: 1680px;
+    margin: 30px auto 0;
+    min-height: 1000px;
+  }
+  #wire { position:absolute; inset:0; width:100%; height:100%; z-index:3; pointer-events:none; overflow:visible; }
+
+  /* 手机外壳（背景参照，不可编辑） */
+  .phone {
+    position: absolute;
+    width: 390px; height: 800px;
+    background: linear-gradient(180deg, #eaf2ff, #f3f0ff 40%, #f6f7fb);
+    border-radius: 46px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 11px #0d0e14, 0 0 0 13px #2a2c3a;
+    display: flex; flex-direction: column; z-index: 2; user-select: none;
+  }
+  #phoneHome { left: 250px; top: 60px; }
+  #phoneCashier { left: 1040px; top: 60px; background:#f4f5f9; }
+  .phone-label { position:absolute; top:-42px; left:50%; transform:translateX(-50%); background:#2a2c3a; color:#fff; font-size:13px; font-weight:700; padding:6px 16px; border-radius:20px; white-space:nowrap; }
+
+  .statusbar { height:40px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:12px; font-weight:700; color:#1c1d28; }
+  .sb-right { display:flex; gap:5px; font-size:10px; }
+  .topbar { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; padding:4px 18px 10px; }
+  .balance { display:flex; align-items:center; gap:12px; }
+  .balance-item { display:flex; align-items:center; gap:7px; }
+  .balance-num { font-size:25px; font-weight:800; color:#1c1d28; }
+  .blue-gem { width:28px; height:28px; }
+  .gold-gem-btn { border:none; background:transparent; padding:0; display:flex; align-items:center; gap:5px; }
+  .gold-gem { width:30px; height:30px; filter:drop-shadow(0 2px 4px rgba(245,180,30,0.45)); }
+  .gold-plus { width:17px; height:17px; margin-left:-9px; margin-top:14px; background:#ff8a00; color:#fff; border-radius:50%; font-size:12px; font-weight:800; line-height:17px; text-align:center; }
+  .friends-btn { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.6); display:flex; align-items:center; justify-content:center; font-size:17px; border:none; }
+  .content { flex:1 1 auto; overflow:hidden; padding:0 16px 12px; }
+  .streak { background:#fff; border-radius:14px; padding:14px 18px; font-size:14px; font-weight:600; color:#1c1d28; box-shadow:0 4px 14px rgba(80,90,160,0.08); margin-bottom:14px; }
+  .entry-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+  .entry-card { border-radius:18px; padding:14px 12px; position:relative; overflow:hidden; min-height:108px; }
+  .entry-card.task { background:linear-gradient(135deg,#dbe5ff,#c3d8ff); }
+  .entry-card.shop { background:linear-gradient(135deg,#ffe2d6,#ffd0d8); }
+  .entry-title { font-size:18px; font-weight:800; color:#2b2d42; }
+  .entry-go { margin-top:10px; border:none; color:#fff; font-size:12px; font-weight:700; padding:6px 16px; border-radius:13px; }
+  .entry-card.task .entry-go { background:linear-gradient(135deg,#3f9bff,#2f7bff); }
+  .entry-card.shop .entry-go { background:linear-gradient(135deg,#ffa64d,#ff8a3d); }
+  .entry-emoji { position:absolute; right:8px; bottom:6px; font-size:38px; }
+  .section-title { font-size:21px; font-weight:800; color:#1c1d28; margin:2px 2px 12px; }
+  .game-card { border-radius:20px; overflow:hidden; margin-bottom:16px; box-shadow:0 8px 22px rgba(40,50,90,0.12); }
+  .game-card.featured { border:3px solid #2f7bff; }
+  .game-hero { height:150px; display:flex; align-items:center; justify-content:center; font-size:54px; position:relative; }
+  .game-hero.basket { background:radial-gradient(circle at 50% 40%, #ff7a3d, #b73a86 55%, #2a1d6b); }
+  .flash-badge { position:absolute; top:10px; left:10px; width:30px; height:30px; background:rgba(0,0,0,0.35); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .game-foot { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#fff; }
+  .game-thumb { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; background:#eef1ff; }
+  .game-name { flex:1; font-size:16px; font-weight:800; color:#1c1d28; }
+  .game-start { border:none; background:#2f7bff; color:#fff; font-size:13px; font-weight:700; padding:8px 20px; border-radius:17px; }
+  .tabbar { flex:0 0 auto; display:flex; background:#fff; border-top:1px solid #eef0f5; padding:7px 0 12px; }
+  .tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; font-weight:600; color:#9aa0b4; }
+  .tab span { font-size:18px; }
+  .tab.active { color:#2f7bff; }
+  .cs-header { display:flex; align-items:center; padding:8px 18px 12px; }
+  .cs-balance { display:flex; align-items:center; gap:6px; font-weight:800; font-size:24px; color:#1c1d28; }
+  .cs-balance .blue-gem { width:26px; height:26px; }
+  .promo { height:96px; border:1px dashed #cfd3dd; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#aeb3c0; font-size:15px; margin:0 16px 14px; }
+  .limited { margin:0 16px 16px; border-radius:14px; height:110px; background:linear-gradient(120deg,#ffcf4d,#ff7a3d); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px; box-shadow:0 8px 20px rgba(255,140,60,0.35); }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:0 16px; }
+  .pcell { background:linear-gradient(160deg,#fff,#eef1fb); border:1px solid #e7eaf3; border-radius:12px; padding:12px 6px; text-align:center; }
+  .pcell .amt { font-size:15px; font-weight:800; color:#1c1d28; }
+  .pcell .bonus { font-size:11px; color:#2f9d5b; font-weight:700; }
+  .pcell .price { margin-top:8px; font-size:12px; font-weight:700; color:#fff; background:#2f7bff; border-radius:10px; padding:5px 0; }
+  .legal2 { font-size:10px; color:#9aa0b4; padding:14px 18px 0; line-height:1.5; }
+  .mini-sheet { margin:16px; border-radius:18px; background:#fff; box-shadow:0 10px 30px rgba(0,0,0,0.18); padding:14px 16px; }
+  .ms-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .ms-icon { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#1fb6ff,#0a84ff); color:#fff; font-weight:800; font-size:20px; display:flex; align-items:center; justify-content:center; }
+  .ms-title { font-size:14px; font-weight:700; color:#111; }
+  .ms-sub { font-size:11px; color:#8a8a8e; }
+  .ms-row { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-top:0.5px solid #eee; }
+  .ms-face { text-align:center; font-size:11px; color:#555; margin-top:8px; }
+  .ms-face .fid { width:42px; height:42px; border-radius:11px; background:#0a84ff; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; }
+
+  /* ===== 可编辑注释卡 ===== */
+  .note {
+    position: absolute;
+    width: 230px;
+    min-width: 170px; min-height: 110px;
+    max-width: 640px; max-height: 680px;
+    background: rgba(34,37,55,0.95);
+    border: 1.5px solid var(--c, #2f7bff);
+    border-radius: 14px;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.45);
+    z-index: 6;
+    display: flex; flex-direction: column;
+    resize: both; overflow: hidden;
+  }
+  .note.selected { box-shadow: 0 0 0 3px var(--c,#2f7bff), 0 10px 26px rgba(0,0,0,0.5); }
+  /* 自定义缩放抓手（装饰，真实缩放走原生 resize 角区） */
+  .note::after {
+    content:""; position:absolute; right:3px; bottom:3px;
+    width:12px; height:12px; pointer-events:none; opacity:0.75;
+    background: linear-gradient(135deg, transparent 0 48%, rgba(255,255,255,0.55) 48% 58%, transparent 58% 72%, rgba(255,255,255,0.55) 72% 82%, transparent 82%);
+  }
+  .note-head {
+    flex:0 0 auto;
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; cursor:move;
+    background: color-mix(in srgb, var(--c,#2f7bff) 22%, transparent);
+    border-radius: 12px 12px 0 0;
+  }
+  .note-head .grip { color:#aeb4c8; font-size:13px; }
+  .note-title {
+    flex:1; font-size:13px; font-weight:800; color:#fff;
+    outline:none; min-width:0;
+  }
+  .note-title:focus { background:rgba(255,255,255,0.08); border-radius:5px; }
+  .edit-toggle {
+    flex:0 0 auto; border:none; background:rgba(255,255,255,0.12); color:#fff;
+    width:22px; height:22px; border-radius:6px; cursor:pointer; font-size:12px;
+  }
+  .note.editing .edit-toggle { display:none; }
+  /* 正文：Markdown 预览 */
+  .note-body {
+    flex:1 1 auto; overflow:auto;
+    font-size:12px; line-height:1.6; color:#cdd2e2;
+    padding:8px 12px 10px; word-break:break-word;
+  }
+  .note.editing .note-body { display:none; }
+  /* 正文：Markdown 编辑 */
+  .note-edit {
+    display:none; flex:1 1 auto; min-height:70px;
+    margin:8px 10px; padding:6px 8px;
+    background:#1b1d2a; color:#e8eaf2;
+    border:1px solid rgba(140,150,200,0.35); border-radius:8px;
+    font-family:inherit; font-size:12px; line-height:1.5; resize:none; outline:none;
+  }
+  .note.editing .note-edit { display:block; }
+  /* Markdown 渲染样式 */
+  .note-body.md h1 { font-size:15px; margin:4px 0 6px; color:#fff; }
+  .note-body.md h2 { font-size:14px; margin:4px 0 5px; color:#fff; }
+  .note-body.md h3 { font-size:13px; margin:3px 0 4px; color:#eef; }
+  .note-body.md p  { margin:0 0 6px; }
+  .note-body.md ul, .note-body.md ol { margin:0 0 6px; padding-left:18px; }
+  .note-body.md li { margin:2px 0; }
+  .note-body.md strong { color:#fff; }
+  .note-body.md em { color:#dfe3f0; }
+  .note-body.md code { background:rgba(255,255,255,0.12); padding:1px 5px; border-radius:5px; font-family:ui-monospace,Menlo,monospace; font-size:11px; color:#ffd27a; }
+  .note-body.md pre { background:#15161f; padding:8px 10px; border-radius:8px; overflow:auto; margin:0 0 6px; }
+  .note-body.md pre code { background:none; padding:0; color:#cfe3ff; }
+  .note-body.md a { color:#7fb6ff; }
+  .note-body.md blockquote { border-left:3px solid var(--c,#2f7bff); margin:0 0 6px; padding:2px 0 2px 10px; color:#aab1c6; }
+  .note-body.md hr { border:none; border-top:1px solid rgba(255,255,255,0.2); margin:8px 0; }
+  .note-foot { flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:6px 10px 9px; flex-wrap:wrap; }
+  .swatch { width:15px; height:15px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
+  .swatch.on { border-color:#fff; }
+  .mini { font-size:11px; padding:3px 8px; border-radius:8px; border:1px solid rgba(150,160,200,0.3); background:transparent; color:#cdd2e2; cursor:pointer; }
+  .mini:hover { background:rgba(255,255,255,0.08); }
+  .mini.del { color:#ff8088; border-color:rgba(255,90,100,0.4); }
+
+  /* 锚点 */
+  .anchor {
+    position:absolute; z-index:5;
+    width:18px; height:18px; margin:-9px 0 0 -9px;
+    border-radius:50%;
+    background: var(--c,#2f7bff);
+    border:2.5px solid #fff;
+    box-shadow:0 2px 8px rgba(0,0,0,0.4);
+    cursor:grab;
+  }
+  .anchor:hover { transform:scale(1.25); }
+  .anchor.dragging { cursor:grabbing; }
+  .anchor .x {
+    position:absolute; top:-9px; right:-9px;
+    width:15px; height:15px; border-radius:50%;
+    background:#ff5a64; color:#fff; font-size:10px; line-height:15px; text-align:center;
+    display:none; cursor:pointer;
+  }
+  .anchor:hover .x { display:block; }
+
+  .empty-hint { position:absolute; left:50%; top:920px; transform:translateX(-50%); color:#5a607a; font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="title">金钻充值 · 标注板<small>可拖拽 · 可编辑 · 自动保存</small></div>
+    <button class="btn primary" id="addNote">＋ 新建注释</button>
+    <button class="btn blue" id="addAnchor">＋ 给选中注释加锚点</button>
+    <span class="spacer"></span>
+    <span class="tip">拖头部移动注释 · 拖圆点移动锚点 · 双击文字编辑 · 悬停锚点点✕删除</span>
+    <button class="btn ghost" id="exportBtn">导出</button>
+    <button class="btn ghost" id="importBtn">导入</button>
+    <button class="btn ghost" id="resetBtn">重置示例</button>
+    <button class="btn ghost" id="clearBtn">清空</button>
+    <input type="file" id="fileInput" accept="application/json" style="display:none">
+  </div>
+
+  <div class="board" id="board">
+    <svg id="wire"></svg>
+
+    <!-- ===== 首页（背景参照） ===== -->
+    <div class="phone" id="phoneHome">
+      <div class="phone-label">① 首页（入口）</div>
+      <div class="statusbar"><span>10:38</span><span class="sb-right">📶 🛜 🔋26</span></div>
+      <div class="topbar">
+        <div class="balance">
+          <div class="balance-item" data-node="蓝钻余额"><img class="blue-gem" src="assets/gem.png" alt="蓝钻"><span class="balance-num">1,620</span></div>
+          <button class="gold-gem-btn" data-node="金钻入口">
+            <svg class="gold-gem" viewBox="0 0 48 48"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe27a"/><stop offset="45%" stop-color="#ffc01e"/><stop offset="100%" stop-color="#f59a00"/></linearGradient></defs><polygon points="24,4 44,18 24,44 4,18" fill="url(#g1)" stroke="#e08800" stroke-width="1.2"/><polygon points="24,4 32,18 24,44 16,18" fill="#fff4c2" opacity="0.55"/><line x1="4" y1="18" x2="44" y2="18" stroke="#e08800" stroke-width="1"/></svg>
+            <span class="gold-plus">+</span>
+          </button>
+        </div>
+        <button class="friends-btn" data-node="好友">👥</button>
+      </div>
+      <div class="content">
+        <div class="streak" data-node="streak">1-day streak</div>
+        <div class="entry-row">
+          <div class="entry-card task" data-node="任务中心"><div class="entry-title">任务中心</div><button class="entry-go">进入</button><span class="entry-emoji">📋</span></div>
+          <div class="entry-card shop" data-node="商城入口"><div class="entry-title">商城</div><button class="entry-go">进入</button><span class="entry-emoji">🏪</span></div>
+        </div>
+        <h2 class="section-title">Battle</h2>
+        <div class="game-card featured" data-node="游戏卡">
+          <div class="game-hero basket"><div class="flash-badge">⚡</div>🏀</div>
+          <div class="game-foot"><div class="game-thumb">🏀</div><div class="game-name">BasketShot</div><button class="game-start">开始</button></div>
+        </div>
+      </div>
+      <nav class="tabbar" data-node="底部导航">
+        <div class="tab"><span>🏠</span><em>首页</em></div>
+        <div class="tab active"><span>🎯</span><em>多人</em></div>
+        <div class="tab"><span>🛠️</span><em>工具</em></div>
+        <div class="tab"><span>👤</span><em>我的</em></div>
+      </nav>
+    </div>
+
+    <!-- ===== 收银台（背景参照） ===== -->
+    <div class="phone" id="phoneCashier">
+      <div class="phone-label">② 收银台（支付）</div>
+      <div class="statusbar"><span>9:41</span><span class="sb-right">📶 🛜 🔋</span></div>
+      <div class="cs-header"><div class="cs-balance" data-node="余额"><span class="balance-num">500</span><img class="blue-gem" src="assets/gem.png"></div></div>
+      <div class="content" style="overflow:hidden;">
+        <div class="promo" data-node="宣传Banner">宣传 banner ✕</div>
+        <div class="limited" data-node="限量首充卡">仅限首充 · 1000💎 / US$0.99</div>
+        <div class="grid" data-node="商品档位">
+          <div class="pcell"><div class="amt">500💎</div><div class="bonus">+100</div><div class="price">0.99$</div></div>
+          <div class="pcell"><div class="amt">500💎</div><div class="bonus">+100</div><div class="price">0.99$</div></div>
+          <div class="pcell"><div class="amt">500💎</div><div class="bonus">+100</div><div class="price">0.99$</div></div>
+        </div>
+        <div class="mini-sheet" data-node="支付面板">
+          <div class="ms-head"><div class="ms-icon">A</div><div><div class="ms-title">App Store</div><div class="ms-sub">apple_id@icloud.com</div></div></div>
+          <div class="ms-row"><span>500💎 礼包</span><span>¥6.00</span></div>
+          <div class="ms-face"><div class="fid">😊</div>双击侧边按钮以确认</div>
+        </div>
+        <p class="legal2">购买即代表同意《用户协议》。订阅到期自动续费，可随时取消。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    const board = document.getElementById('board');
+    const svg = document.getElementById('wire');
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const KEY = 'payAnnoState_v2';
+    const COLORS = ['#f5a623','#2f7bff','#27ae60','#ff5d8f','#8a6bff','#7e879c'];
+
+    let state = { notes: [] };
+    let selectedId = null;
+    let uid = Date.now();
+    const nid = () => 'n' + (++uid);
+    const aid = () => 'a' + (++uid);
+
+    /* ---------- 坐标工具 ---------- */
+    function boardPoint(clientX, clientY) {
+      const b = board.getBoundingClientRect();
+      return { x: clientX - b.left, y: clientY - b.top };
+    }
+    function rectIn(el) {
+      const b = board.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return { x:r.left-b.left, y:r.top-b.top, w:r.width, h:r.height,
+               cx:r.left-b.left+r.width/2, cy:r.top-b.top+r.height/2 };
+    }
+
+    /* ---------- 持久化 ---------- */
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+    function load() {
+      try { const s = localStorage.getItem(KEY); if (s) { state = JSON.parse(s); return true; } } catch(e){}
+      return false;
+    }
+
+    /* ---------- 渲染 ---------- */
+    const noteEls = new Map();   // id -> element
+    const anchorEls = new Map(); // anchorId -> {el, noteId}
+
+    function clearDom() {
+      noteEls.forEach(el => el.remove()); noteEls.clear();
+      anchorEls.forEach(o => o.el.remove()); anchorEls.clear();
+    }
+
+    function buildNote(note) {
+      const el = document.createElement('div');
+      el.className = 'note';
+      el.style.setProperty('--c', note.color);
+      el.style.left = note.x + 'px';
+      el.style.top = note.y + 'px';
+      if (note.w) el.style.width = note.w + 'px';
+      if (note.h) el.style.height = note.h + 'px';
+      el.dataset.id = note.id;
+      el.innerHTML = `
+        <div class="note-head">
+          <span class="grip">⠿</span>
+          <div class="note-title" contenteditable="true" spellcheck="false"></div>
+          <button class="edit-toggle" title="编辑 / 预览（Markdown）">✎</button>
+        </div>
+        <div class="note-body md"></div>
+        <textarea class="note-edit" spellcheck="false" placeholder="支持 Markdown：**粗体** *斜体* # 标题 - 列表 \`代码\` [链接](url) > 引用"></textarea>
+        <div class="note-foot">
+          ${COLORS.map(c => `<span class="swatch" data-c="${c}" style="background:${c}"></span>`).join('')}
+          <button class="mini addA">＋锚点</button>
+          <button class="mini done">✓ 确定</button>
+          <button class="mini del">删除</button>
+        </div>`;
+      el.querySelector('.note-title').textContent = note.title || '新注释';
+      el.querySelector('.note-body').textContent = note.body || '点击编辑说明…';
+      board.appendChild(el);
+      noteEls.set(note.id, el);
+
+      // 选中
+      el.addEventListener('mousedown', () => selectNote(note.id));
+      // 编辑文字
+      el.querySelector('.note-title').addEventListener('input', e => { note.title = e.target.textContent; save(); });
+      el.querySelector('.note-body').addEventListener('input', e => { note.body = e.target.textContent; save(); });
+      // 颜色
+      el.querySelectorAll('.swatch').forEach(s => {
+        if (s.dataset.c === note.color) s.classList.add('on');
+        s.addEventListener('click', () => {
+          note.color = s.dataset.c;
+          el.style.setProperty('--c', note.color);
+          el.querySelectorAll('.swatch').forEach(x => x.classList.toggle('on', x.dataset.c === note.color));
+          (note.anchors||[]).forEach(a => { const ao = anchorEls.get(a.id); if (ao) ao.el.style.setProperty('--c', note.color); });
+          drawWires(); save();
+        });
+      });
+      // 加锚点
+      el.querySelector('.addA').addEventListener('click', () => addAnchor(note));
+      // 删除
+      el.querySelector('.del').addEventListener('click', () => removeNote(note.id));
+      // 拖拽（头部）
+      makeDraggable(el.querySelector('.note-head'), (dx,dy) => {
+        note.x += dx; note.y += dy;
+        el.style.left = note.x + 'px'; el.style.top = note.y + 'px';
+        drawWires();
+      }, save);
+
+      (note.anchors || []).forEach(a => buildAnchor(note, a));
+    }
+
+    function buildAnchor(note, a) {
+      const el = document.createElement('div');
+      el.className = 'anchor';
+      el.style.setProperty('--c', note.color);
+      el.style.left = a.x + 'px'; el.style.top = a.y + 'px';
+      el.innerHTML = `<span class="x">✕</span>`;
+      board.appendChild(el);
+      anchorEls.set(a.id, { el, noteId: note.id });
+
+      el.querySelector('.x').addEventListener('click', (e) => { e.stopPropagation(); removeAnchor(note.id, a.id); });
+      makeDraggable(el, (dx,dy) => {
+        a.x += dx; a.y += dy;
+        el.style.left = a.x + 'px'; el.style.top = a.y + 'px';
+        drawWires();
+      }, save, true);
+    }
+
+    function render() {
+      clearDom();
+      state.notes.forEach(buildNote);
+      drawWires();
+      updateSelection();
+    }
+
+    /* ---------- 连线 ---------- */
+    function curve(x1,y1,x2,y2,color) {
+      const dx = Math.max(40, Math.abs(x2-x1)*0.45);
+      const c1x = x1 + (x2>x1?dx:-dx), c2x = x2 + (x2>x1?-dx:dx);
+      const p = document.createElementNS(SVGNS,'path');
+      p.setAttribute('d', `M ${x1} ${y1} C ${c1x} ${y1} ${c2x} ${y2} ${x2} ${y2}`);
+      p.setAttribute('fill','none'); p.setAttribute('stroke',color);
+      p.setAttribute('stroke-width','2.4'); p.setAttribute('stroke-linecap','round');
+      svg.appendChild(p);
+    }
+    function drawWires() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      state.notes.forEach(note => {
+        const nEl = noteEls.get(note.id); if (!nEl) return;
+        const n = rectIn(nEl);
+        (note.anchors||[]).forEach(a => {
+          const ao = anchorEls.get(a.id); if (!ao) return;
+          const ax = a.x, ay = a.y;
+          // 注释卡取靠近锚点的一侧边中点
+          const startX = (ax > n.cx) ? n.x + n.w : n.x;
+          const startY = n.cy;
+          curve(startX, startY, ax, ay, note.color);
+        });
+      });
+    }
+
+    /* ---------- 拖拽通用 ---------- */
+    function makeDraggable(handle, onMove, onEnd, isAnchor) {
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.target.isContentEditable) return;
+        if (e.target.classList && e.target.classList.contains('x')) return;
+        e.preventDefault();
+        handle.setPointerCapture(e.pointerId);
+        if (isAnchor) handle.classList.add('dragging');
+        let last = { x: e.clientX, y: e.clientY };
+        const move = (ev) => {
+          const dx = ev.clientX - last.x, dy = ev.clientY - last.y;
+          last = { x: ev.clientX, y: ev.clientY };
+          onMove(dx, dy);
+        };
+        const up = (ev) => {
+          handle.releasePointerCapture(e.pointerId);
+          handle.removeEventListener('pointermove', move);
+          handle.removeEventListener('pointerup', up);
+          if (isAnchor) handle.classList.remove('dragging');
+          onEnd && onEnd();
+        };
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', up);
+      });
+    }
+
+    /* ---------- 操作 ---------- */
+    function viewCenter() {
+      // 在当前可视区域中心放置
+      const x = board.scrollLeft + window.scrollX;
+      return { x: (window.innerWidth/2) - board.getBoundingClientRect().left + 0, y: 200 + window.scrollY };
+    }
+    function addNote(opts) {
+      const note = Object.assign({
+        id: nid(), x: 40, y: 120, color: COLORS[0],
+        title: '新注释', body: '点击编辑说明…', anchors: []
+      }, opts || {});
+      state.notes.push(note);
+      buildNote(note);
+      selectNote(note.id);
+      drawWires(); save();
+      return note;
+    }
+    function addAnchor(note) {
+      const nEl = noteEls.get(note.id); const n = rectIn(nEl);
+      const a = { id: aid(), x: n.cx + (n.cx < 840 ? 180 : -180), y: n.cy };
+      note.anchors = note.anchors || [];
+      note.anchors.push(a);
+      buildAnchor(note, a);
+      drawWires(); save();
+    }
+    function removeNote(id) {
+      const i = state.notes.findIndex(n => n.id === id);
+      if (i < 0) return;
+      (state.notes[i].anchors||[]).forEach(a => { const ao = anchorEls.get(a.id); if (ao){ao.el.remove(); anchorEls.delete(a.id);} });
+      const el = noteEls.get(id); if (el){ el.remove(); noteEls.delete(id); }
+      state.notes.splice(i,1);
+      if (selectedId === id) selectedId = null;
+      drawWires(); save();
+    }
+    function removeAnchor(noteId, anchorId) {
+      const note = state.notes.find(n => n.id === noteId); if (!note) return;
+      note.anchors = (note.anchors||[]).filter(a => a.id !== anchorId);
+      const ao = anchorEls.get(anchorId); if (ao){ ao.el.remove(); anchorEls.delete(anchorId); }
+      drawWires(); save();
+    }
+    function selectNote(id) {
+      selectedId = id; updateSelection();
+    }
+    function updateSelection() {
+      noteEls.forEach((el,id) => el.classList.toggle('selected', id === selectedId));
+    }
+
+    /* ---------- 示例数据（基于 UI 节点定位锚点） ---------- */
+    function seed() {
+      state = { notes: [] };
+      clearDom();
+      const defs = [
+        { node:'蓝钻余额', color:'#2f7bff', x:8,   y:90,  title:'蓝钻余额', body:'基础货币展示（千分位）。本期不改充值逻辑，仅作展示对照。' },
+        { node:'金钻入口', color:'#f5a623', x:8,   y:250, title:'金钻充值入口 ★', body:'本期核心。蓝钻数字之后，金色钻石+橙色「+」角标。点击直达收银台发起充值。' },
+        { node:'任务中心', color:'#2f7bff', x:8,   y:430, title:'任务 / 商城入口', body:'任务中心做留存；商城「进入」同样跳转收银台，作第二充值入口。' },
+        { node:'底部导航', color:'#7e879c', x:8,   y:600, title:'底部导航', body:'首页 / 多人 / 工具 / 我的，全局切换，当前高亮「多人」。' },
+        { node:'好友',     color:'#7e879c', x:700, y:80,  title:'好友入口', body:'社交关系入口（本期不展开）。' },
+        { node:'游戏卡',   color:'#2f7bff', x:700, y:560, title:'Battle 游戏卡', body:'游戏曝光与「开始」入口，承接金钻消费场景（后续打通）。' },
+        { node:'宣传Banner', color:'#ff5d8f', x:1450, y:80,  title:'宣传 Banner', body:'运营位，可关闭；关闭后下方内容自动上移。' },
+        { node:'限量首充卡', color:'#ff5d8f', x:1450, y:230, title:'限量首充卡', body:'仅限首次购买的高性价比礼包，刺激首充转化。' },
+        { node:'商品档位',  color:'#27ae60', x:1450, y:400, title:'商品档位', body:'多档礼包（如 500💎+100 / 0.99$）。点击发起购买，未登录先拦截登录。' },
+        { node:'支付面板',  color:'#8a6bff', x:1450, y:580, title:'支付确认面板', body:'iOS：App Store + Face ID 双击确认；Android：Google Play + 购买。成功后余额累加并提示到账。' },
+      ];
+      defs.forEach(d => {
+        const target = board.querySelector(`[data-node="${d.node}"]`);
+        const note = { id: nid(), x:d.x, y:d.y, color:d.color, title:d.title, body:d.body, anchors:[] };
+        if (target) { const t = rectIn(target); note.anchors.push({ id: aid(), x: t.cx, y: t.cy }); }
+        state.notes.push(note);
+      });
+      render(); save();
+    }
+
+    /* ---------- 工具条 ---------- */
+    document.getElementById('addNote').addEventListener('click', () => {
+      addNote({ x: board.scrollLeft + 60, y: 90 });
+    });
+    document.getElementById('addAnchor').addEventListener('click', () => {
+      const note = state.notes.find(n => n.id === selectedId);
+      if (!note) { alert('请先点选一张注释卡，再添加锚点'); return; }
+      addAnchor(note);
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('重置为示例标注？当前修改会丢失。')) seed();
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      if (confirm('清空所有注释与锚点？')) { state = { notes: [] }; render(); save(); }
+    });
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'annotations.json'; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => { try { state = JSON.parse(r.result); render(); save(); } catch(err){ alert('文件解析失败'); } };
+      r.readAsText(f); e.target.value = '';
+    });
+
+    // 点空白处取消选中
+    board.addEventListener('mousedown', (e) => {
+      if (e.target === board || e.target === svg) { selectedId = null; updateSelection(); }
+    });
+
+    window.addEventListener('resize', drawWires);
+    window.addEventListener('scroll', drawWires);
+
+    /* ---------- 启动 ---------- */
+    function start() {
+      if (load() && state.notes && state.notes.length) render();
+      else seed();
+    }
+    // 等图片加载完再定位示例锚点
+    const imgs = Array.from(document.images);
+    let pending = imgs.filter(i => !i.complete).length;
+    if (pending === 0) start();
+    else imgs.forEach(i => i.addEventListener('load', () => { if (--pending === 0) start(); }, { once:true }));
+    setTimeout(() => { if (!noteEls.size) start(); }, 600);
+  })();
+  </script>
+</body>
+</html>

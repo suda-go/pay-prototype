@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>支付原型 · Google Play / Apple IAP</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 平台切换 -->
+  <div class="platform-switch">
+    <button class="ps-btn active" data-os="ios"> iOS</button>
+    <button class="ps-btn" data-os="android">🤖 Android</button>
+  </div>
+
+  <!-- 登录状态切换 -->
+  <div class="platform-switch login-switch">
+    <button class="ls-btn active" data-login="false">🚪 未登录</button>
+    <button class="ls-btn" data-login="true">✅ 已登录</button>
+  </div>
+
+  <!-- 手机外壳 -->
+  <div class="phone" id="phone">
+    <!-- 状态栏 -->
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="notch"></span>
+      <span class="icons">
+        <span>📶</span><span>🛜</span><span class="battery">🔋</span>
+      </span>
+    </div>
+
+    <!-- 应用内容 -->
+    <div class="screen">
+      <header class="store-header">
+        <div class="balance">
+          <span class="balance-num" id="balanceNum">500</span>
+          <img class="gem-img" src="assets/gem.png" alt="钻石">
+        </div>
+      </header>
+
+      <!-- 宣传 banner -->
+      <div class="promo-banner" id="promoBanner">
+        <span class="promo-text">宣传 banner</span>
+        <button class="promo-close" id="promoClose" aria-label="关闭">✕</button>
+      </div>
+
+      <!-- 限量优惠大卡（图片）-->
+      <div class="limited-card" id="limitedCard">
+        <img class="limited-img" src="assets/offer-card.png" alt="仅限首次购买 1000💎 US$0.99">
+      </div>
+
+      <!-- 商品网格 -->
+      <div class="product-list" id="productList"></div>
+
+      <p class="legal">购买即代表同意《用户协议》。订阅到期自动续费，可随时在系统设置中取消。</p>
+    </div>
+  </div>
+
+  <!-- 遮罩 -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- ===== Apple IAP 支付面板 ===== -->
+  <div class="sheet apple-sheet" id="appleSheet">
+    <div class="apple-card">
+      <div class="apple-head">
+        <div class="apple-store-icon">A</div>
+        <div class="apple-acc">
+          <div class="apple-title">App Store</div>
+          <div class="apple-sub" id="appleAccount">apple_id@icloud.com</div>
+        </div>
+      </div>
+      <div class="apple-row">
+        <span class="apple-prod" id="appleProd">600 金币礼包</span>
+        <span class="apple-price" id="applePrice">¥6.00</span>
+      </div>
+      <div class="apple-row sub">
+        <span>App 内购买项目</span>
+        <span id="appleMerchant">GameCenter</span>
+      </div>
+      <div class="apple-faceid">
+        <div class="faceid-icon" id="faceIcon">
+          <svg viewBox="0 0 60 60" width="56" height="56">
+            <path d="M10 18 V12 a2 2 0 0 1 2-2 h6 M42 10 h6 a2 2 0 0 1 2 2 v6 M50 42 v6 a2 2 0 0 1-2 2 h-6 M18 50 h-6 a2 2 0 0 1-2-2 v-6"
+              fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+            <circle cx="23" cy="26" r="2" fill="#fff"/>
+            <circle cx="37" cy="26" r="2" fill="#fff"/>
+            <path d="M30 25 v8 M26 38 q4 3 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="faceid-text" id="appleHint">双击侧边按钮以确认</div>
+      </div>
+      <div class="apple-doubleclick">
+        <span class="dc-arrow">»</span> 用 Face ID 确认
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Google Play 支付面板 ===== -->
+  <div class="sheet google-sheet" id="googleSheet">
+    <div class="g-card">
+      <div class="g-head">
+        <div class="g-logo">
+          <span style="color:#00A1F1">▶</span>
+          <b>Google</b> Play
+        </div>
+        <div class="g-close" id="gClose">✕</div>
+      </div>
+      <div class="g-prod">
+        <div class="g-prod-icon">🎮</div>
+        <div class="g-prod-info">
+          <div class="g-prod-name" id="gProd">600 金币礼包</div>
+          <div class="g-prod-merchant">GameCenter</div>
+        </div>
+        <div class="g-prod-price" id="gPrice">¥6.00</div>
+      </div>
+      <div class="g-payment">
+        <div class="g-pay-row">
+          <span class="g-pay-icon">💳</span>
+          <span class="g-pay-text" id="gAccount">Visa ···· 8842</span>
+          <span class="g-pay-arrow">⌄</span>
+        </div>
+        <div class="g-pay-row">
+          <span class="g-pay-icon">📧</span>
+          <span class="g-pay-text">google_user@gmail.com</span>
+        </div>
+      </div>
+      <button class="g-buy-btn" id="gBuyBtn">
+        <span id="gBuyText">购买</span>
+      </button>
+      <p class="g-legal">点击「购买」即表示同意 Google Play 服务条款。</p>
+    </div>
+  </div>
+
+  <!-- 处理中 -->
+  <div class="processing" id="processing">
+    <div class="spinner"></div>
+    <div class="proc-text">支付处理中…</div>
+  </div>
+
+  <!-- 成功 -->
+  <div class="success-toast" id="successToast">
+    <div class="success-circle">
+      <svg viewBox="0 0 52 52"><path class="check" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M14 27 l8 8 l16 -18"/></svg>
+    </div>
+    <div class="success-title">支付成功</div>
+    <div class="success-desc" id="successDesc">600 金币已到账</div>
+  </div>
+
+  <!-- 轻提示 toast -->
+  <div class="toast" id="toast">请登录后购买</div>
+
+  <!-- 登录页（覆盖在手机内）-->
+  <div class="login-page" id="loginPage">
+    <div class="login-top">
+      <span class="login-back" id="loginBack">‹</span>
+      <span class="login-nav-title">登录</span>
+    </div>
+    <div class="login-body">
+      <div class="login-logo">💎</div>
+      <h2 class="login-title">登录 GameCenter</h2>
+      <p class="login-sub">登录后即可购买与同步你的钻石</p>
+
+      <button class="login-btn apple-login" id="appleLogin">
+         使用 Apple 登录
+      </button>
+      <button class="login-btn google-login" id="googleLogin">
+        <span class="g-mark">G</span> 使用 Google 登录
+      </button>
+
+      <div class="login-or"><span>或</span></div>
+
+      <input class="login-input" type="text" placeholder="手机号 / 邮箱">
+      <input class="login-input" type="password" placeholder="密码">
+      <button class="login-btn primary-login" id="accountLogin">登录</button>
+
+      <p class="login-legal">登录即代表同意《用户协议》与《隐私政策》</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

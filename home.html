@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>游戏中心 · 首页</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "SF Pro Text", "PingFang SC", "Segoe UI", Roboto, sans-serif;
+    background: #1c1d28;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 0 40px;
+  }
+
+  /* 手机外壳 */
+  .phone {
+    width: 390px;
+    height: 800px;
+    background: linear-gradient(180deg, #eaf2ff 0%, #f3f0ff 40%, #f6f7fb 100%);
+    border-radius: 46px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 11px #0d0e14, 0 0 0 13px #2a2c3a;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 状态栏 */
+  .statusbar {
+    height: 44px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1c1d28;
+  }
+  .sb-left { display: flex; align-items: center; gap: 6px; }
+  .sb-left .dot { font-size: 13px; }
+  .sb-right { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; }
+
+  /* 顶部余额栏 */
+  .topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 20px 12px;
+  }
+  .balance {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .balance-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .balance-num {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1c1d28;
+    letter-spacing: 0.3px;
+  }
+  /* 蓝钻 */
+  .blue-gem { width: 30px; height: 30px; }
+  /* 金钻按钮 */
+  .gold-gem-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 16px;
+    transition: transform 0.12s;
+  }
+  .gold-gem-btn:active { transform: scale(0.92); }
+  .gold-gem { width: 30px; height: 30px; filter: drop-shadow(0 2px 4px rgba(245,180,30,0.45)); }
+  .gold-plus {
+    width: 18px; height: 18px;
+    margin-left: -10px;
+    margin-top: 14px;
+    background: #ff8a00;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .friends-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* 内容区 */
+  .content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0 16px 16px;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* streak 条 */
+  .streak {
+    background: #fff;
+    border-radius: 14px;
+    padding: 15px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1c1d28;
+    box-shadow: 0 4px 14px rgba(80,90,160,0.08);
+    margin-bottom: 16px;
+  }
+
+  /* 入口双卡 */
+  .entry-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .entry-card {
+    border-radius: 18px;
+    padding: 16px 14px;
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+  }
+  .entry-card.task { background: linear-gradient(135deg, #dbe5ff 0%, #c3d8ff 100%); }
+  .entry-card.shop { background: linear-gradient(135deg, #ffe2d6 0%, #ffd0d8 100%); }
+  .entry-title { font-size: 19px; font-weight: 800; color: #2b2d42; }
+  .entry-go {
+    margin-top: 12px;
+    border: none;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 18px;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .entry-card.task .entry-go { background: linear-gradient(135deg,#3f9bff,#2f7bff); }
+  .entry-card.shop .entry-go { background: linear-gradient(135deg,#ffa64d,#ff8a3d); }
+  .entry-emoji {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    font-size: 42px;
+    opacity: 0.95;
+  }
+
+  /* Battle 区 */
+  .section-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1c1d28;
+    margin: 4px 2px 14px;
+  }
+
+  .game-card {
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 22px rgba(40,50,90,0.12);
+    background: #0b1020;
+    position: relative;
+  }
+  .game-card.featured { border: 3px solid #2f7bff; }
+  .game-hero {
+    height: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+  }
+  .game-hero.basket { background: radial-gradient(circle at 50% 40%, #ff7a3d 0%, #b73a86 55%, #2a1d6b 100%); }
+  .game-hero.mahjong { background: radial-gradient(circle at 50% 45%, #1b8f3a 0%, #0c5a6b 60%, #07303f 100%); }
+  .flash-badge {
+    position: absolute;
+    top: 12px; left: 12px;
+    width: 34px; height: 34px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .game-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #fff;
+  }
+  .game-thumb {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    background: #eef1ff;
+  }
+  .game-name { flex: 1; font-size: 17px; font-weight: 800; color: #1c1d28; }
+  .game-start {
+    border: none;
+    background: #2f7bff;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 9px 22px;
+    border-radius: 18px;
+    cursor: pointer;
+  }
+  .game-card.featured .game-start { background: #2f7bff; }
+  .game-card.mahjong-card .game-start { background: #2f7bff; }
+
+  /* 底部 tab */
+  .tabbar {
+    flex: 0 0 auto;
+    display: flex;
+    background: #fff;
+    border-top: 1px solid #eef0f5;
+    padding: 8px 0 14px;
+  }
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #9aa0b4;
+    cursor: pointer;
+  }
+  .tab span { font-size: 20px; }
+  .tab.active { color: #2f7bff; }
+
+  /* 金钻提示气泡 */
+  .gold-hint {
+    position: absolute;
+    left: 70px;
+    top: 76px;
+    background: #1c1d28;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 10px;
+    white-space: nowrap;
+    z-index: 5;
+    animation: floaty 1.6s ease-in-out infinite;
+  }
+  .gold-hint::before {
+    content: "";
+    position: absolute;
+    top: -5px; left: 22px;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid #1c1d28;
+  }
+  @keyframes floaty { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-3px);} }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <!-- 状态栏 -->
+    <div class="statusbar">
+      <div class="sb-left">
+        <span>10:38</span>
+        <span class="dot">🟢</span><span class="dot">🔴</span><span class="dot">🟠</span>
+      </div>
+      <div class="sb-right">
+        <span>0.28 KB/s</span>
+        <span>📶</span><span>🛜</span><span>🔋26</span>
+      </div>
+    </div>
+
+    <!-- 顶部余额：蓝钻 + 数字 + 金钻 -->
+    <div class="topbar">
+      <div class="balance">
+        <!-- 蓝钻 -->
+        <div class="balance-item">
+          <img class="blue-gem" src="assets/gem.png" alt="蓝钻">
+          <span class="balance-num">1,620</span>
+        </div>
+        <!-- 金钻（点击跳转支付页） -->
+        <button class="gold-gem-btn" id="goldGemBtn" title="充值金钻">
+          <svg class="gold-gem" viewBox="0 0 48 48" aria-hidden="true">
+            <defs>
+              <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffe27a"/>
+                <stop offset="45%" stop-color="#ffc01e"/>
+                <stop offset="100%" stop-color="#f59a00"/>
+              </linearGradient>
+            </defs>
+            <polygon points="24,4 44,18 24,44 4,18" fill="url(#goldGrad)" stroke="#e08800" stroke-width="1.2"/>
+            <polygon points="24,4 32,18 24,44 16,18" fill="#fff4c2" opacity="0.55"/>
+            <line x1="4" y1="18" x2="44" y2="18" stroke="#e08800" stroke-width="1"/>
+          </svg>
+          <span class="balance-num gold-num">320</span>
+          <span class="gold-plus">+</span>
+        </button>
+      </div>
+      <button class="friends-btn" aria-label="好友">👥</button>
+    </div>
+
+    <!-- 内容 -->
+    <div class="content">
+      <div class="streak">1-day streak</div>
+
+      <div class="entry-row">
+        <div class="entry-card task">
+          <div class="entry-title">任务中心</div>
+          <button class="entry-go">进入</button>
+          <span class="entry-emoji">📋</span>
+        </div>
+        <div class="entry-card shop" id="shopCard">
+          <div class="entry-title">商城</div>
+          <button class="entry-go">进入</button>
+          <span class="entry-emoji">🏪</span>
+        </div>
+      </div>
+
+      <h2 class="section-title">Battle</h2>
+
+      <div class="game-card featured">
+        <div class="game-hero basket">
+          <div class="flash-badge">⚡</div>
+          🏀
+        </div>
+        <div class="game-foot">
+          <div class="game-thumb">🏀</div>
+          <div class="game-name">BasketShot</div>
+          <button class="game-start">开始</button>
+        </div>
+      </div>
+
+      <div class="game-card mahjong-card">
+        <div class="game-hero mahjong">🀄</div>
+        <div class="game-foot">
+          <div class="game-thumb">🀄</div>
+          <div class="game-name">3D majiang</div>
+          <button class="game-start">开始</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部 tab -->
+    <nav class="tabbar">
+      <div class="tab"><span>🏠</span><em>首页</em></div>
+      <div class="tab active"><span>🎯</span><em>多人</em></div>
+      <div class="tab"><span>🛠️</span><em>工具</em></div>
+      <div class="tab"><span>👤</span><em>我的</em></div>
+    </nav>
+  </div>
+
+  <script>
+    // 点击金钻 → 跳转到支付页
+    document.getElementById("goldGemBtn").addEventListener("click", function () {
+      window.location.href = "index.html";
+    });
+    // 商城也作为充值入口（可选）
+    var shop = document.getElementById("shopCard");
+    if (shop) {
+      shop.querySelector(".entry-go").addEventListener("click", function () {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+</html>

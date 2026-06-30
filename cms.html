@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>支付商品配置后台 · CMS</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,"PingFang SC","Segoe UI",Roboto,sans-serif;
+    background:#0f1117; color:#e8eaf2; min-height:100vh;
+  }
+  /* 顶部栏 */
+  .top {
+    display:flex; align-items:center; gap:14px;
+    padding:16px 28px; background:#161922;
+    border-bottom:1px solid #232838; position:sticky; top:0; z-index:20;
+  }
+  .top h1 { font-size:18px; font-weight:800; }
+  .top h1 small { font-size:12px; font-weight:500; color:#8a90a6; margin-left:8px; }
+  .spacer { flex:1; }
+  .btn {
+    border:1px solid #2e3447; background:#1d2130; color:#e8eaf2;
+    font-size:13px; font-weight:600; padding:9px 16px; border-radius:9px; cursor:pointer;
+    transition:.15s;
+  }
+  .btn:hover { background:#262b3d; }
+  .btn.primary { background:linear-gradient(135deg,#3f9bff,#2f6bff); border:none; color:#fff; }
+  .btn.ghost { background:transparent; }
+  .btn.sm { padding:5px 10px; font-size:12px; }
+  .btn.danger { color:#ff8088; border-color:#5a2b30; }
+  /* 统计 */
+  .stats { display:flex; gap:14px; padding:20px 28px 4px; flex-wrap:wrap; }
+  .stat {
+    background:#161922; border:1px solid #232838; border-radius:14px;
+    padding:14px 20px; min-width:150px;
+  }
+  .stat .k { font-size:12px; color:#8a90a6; }
+  .stat .v { font-size:24px; font-weight:800; margin-top:4px; }
+  .stat .v.green { color:#34d27b; }
+  .stat .v.gold { color:#f5b324; }
+  /* 工具行 */
+  .toolrow { display:flex; align-items:center; gap:10px; padding:18px 28px 10px; flex-wrap:wrap; }
+  .search { flex:1; min-width:200px; max-width:360px; position:relative; }
+  .search input {
+    width:100%; background:#161922; border:1px solid #2e3447; color:#e8eaf2;
+    padding:9px 12px 9px 32px; border-radius:9px; font-size:13px; outline:none;
+  }
+  .search::before { content:"🔍"; position:absolute; left:10px; top:8px; font-size:13px; }
+  select.filter {
+    background:#161922; border:1px solid #2e3447; color:#e8eaf2;
+    padding:9px 12px; border-radius:9px; font-size:13px; outline:none;
+  }
+  /* 表格 */
+  .table-wrap { padding:6px 28px 40px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:1040px; }
+  th, td { text-align:left; padding:12px 12px; font-size:13px; border-bottom:1px solid #1e2330; }
+  th { color:#8a90a6; font-weight:600; font-size:12px; white-space:nowrap; }
+  tr:hover td { background:#13161f; }
+  .pid { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:#9fd0ff; }
+  .amt { font-weight:800; }
+  .bonus { color:#34d27b; font-size:12px; margin-left:4px; }
+  .price { font-weight:800; color:#f5b324; }
+  .badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .badge.on { background:rgba(52,210,123,.16); color:#34d27b; }
+  .badge.off { background:rgba(150,160,180,.16); color:#9aa0b4; }
+  .badge.type { background:rgba(63,155,255,.16); color:#6fb1ff; }
+  .badge.first { background:rgba(245,179,36,.16); color:#f5b324; }
+  .badge.sub { background:rgba(170,110,255,.18); color:#b894ff; }
+  .tag-cell { color:#ffd27a; font-size:12px; }
+  .row-actions { display:flex; gap:6px; white-space:nowrap; }
+  .empty { text-align:center; color:#5a607a; padding:50px 0; font-size:14px; }
+  .mask { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:flex-start; justify-content:center; z-index:50; overflow:auto; padding:40px 16px; }
+  .mask.show { display:flex; }
+  .modal { width:560px; max-width:100%; background:#161922; border:1px solid #2a3042; border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .modal-head { display:flex; align-items:center; padding:18px 22px; border-bottom:1px solid #232838; }
+  .modal-head h3 { font-size:16px; font-weight:800; flex:1; }
+  .modal-head .close { cursor:pointer; color:#9aa0b4; font-size:20px; }
+  .form { padding:18px 22px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field.full { grid-column:1 / -1; }
+  .field label { font-size:12px; color:#9aa0b4; }
+  .field label .req { color:#ff7a85; }
+  .field input, .field select, .field textarea { background:#0f1117; border:1px solid #2e3447; color:#e8eaf2; padding:9px 11px; border-radius:8px; font-size:13px; outline:none; font-family:inherit; }
+  .field input:focus, .field select:focus { border-color:#3f9bff; }
+  .field .hint { font-size:11px; color:#6b7186; }
+  .field .err { font-size:11px; color:#ff7a85; display:none; }
+  .field.invalid input { border-color:#ff5a64; }
+  .field.invalid .err { display:block; }
+  .modal-foot { display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid #232838; }
+  .preview { grid-column:1 / -1; background:#0f1117; border:1px dashed #2e3447; border-radius:10px; padding:12px 14px; font-size:13px; color:#c4c9da; line-height:1.6; }
+  .preview b { color:#fff; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>支付商品配置后台 <small>CMS · 商品/价格管理</small></h1>
+    <span class="spacer"></span>
+    <button class="btn ghost" id="openPay">↗ 打开收银台</button>
+    <button class="btn ghost" id="exportBtn">导出</button>
+    <button class="btn ghost" id="importBtn">导入</button>
+    <button class="btn ghost" id="resetBtn">重置示例</button>
+    <button class="btn primary" id="addBtn">＋ 新增商品</button>
+    <input type="file" id="fileInput" accept="application/json" style="display:none">
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">商品总数</div><div class="v" id="stTotal">0</div></div>
+    <div class="stat"><div class="k">已上架</div><div class="v green" id="stOn">0</div></div>
+    <div class="stat"><div class="k">限量首充</div><div class="v gold" id="stFirst">0</div></div>
+    <div class="stat"><div class="k">价格区间</div><div class="v" id="stPrice">-</div></div>
+  </div>
+
+  <div class="toolrow">
+    <div class="search"><input id="searchInput" placeholder="搜索商品ID / 名称 / 平台商品ID"></div>
+    <select class="filter" id="filterStatus">
+      <option value="">全部状态</option>
+      <option value="on">上架</option>
+      <option value="off">下架</option>
+    </select>
+    <select class="filter" id="filterType">
+      <option value="">全部类型</option>
+      <option value="normal">普通礼包</option>
+      <option value="first_charge">限量首充</option>
+      <option value="subscription">订阅</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>序号</th><th>内部商品ID</th><th>名称</th><th>钻石</th><th>售价</th>
+          <th>类型</th><th>角标</th><th>平台商品ID</th><th>状态</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="emptyTip" style="display:none">暂无商品，点击右上角「＋ 新增商品」</div>
+  </div>
+
+  <div class="mask" id="mask">
+    <div class="modal">
+      <div class="modal-head"><h3 id="modalTitle">新增商品</h3><span class="close" id="modalClose">✕</span></div>
+      <div class="form" id="form">
+        <div class="field">
+          <label>商品ID <span class="req">*</span></label>
+          <input id="f_id" placeholder="如 gem_500">
+          <span class="hint">业务唯一标识，建议小写+下划线</span>
+          <span class="err">商品ID 必填且不可重复</span>
+        </div>
+        <div class="field">
+          <label>商品名称 <span class="req">*</span></label>
+          <input id="f_name" placeholder="如 500 钻石礼包">
+          <span class="err">商品名称必填</span>
+        </div>
+        <div class="field">
+          <label>钻石数量 <span class="req">*</span></label>
+          <input id="f_gems" type="number" min="0" placeholder="500">
+          <span class="err">请输入有效钻石数量</span>
+        </div>
+        <div class="field">
+          <label>赠送数量</label>
+          <input id="f_bonus" type="number" min="0" placeholder="100">
+        </div>
+        <div class="field">
+          <label>售价 <span class="req">*</span></label>
+          <input id="f_price" type="number" min="0" step="0.01" placeholder="0.99">
+          <span class="err">请输入有效价格</span>
+        </div>
+        <div class="field">
+          <label>币种</label>
+          <select id="f_currency">
+            <option value="USD">USD（$）</option>
+            <option value="CNY">CNY（¥）</option>
+            <option value="EUR">EUR（€）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>类型</label>
+          <select id="f_type">
+            <option value="normal">普通礼包</option>
+            <option value="first_charge">限量首充</option>
+            <option value="subscription">订阅</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>角标/标签</label>
+          <input id="f_tag" placeholder="如 热卖 / 超值（可空）">
+        </div>
+        <div class="field">
+          <label>iOS 商品ID</label>
+          <input id="f_ios" placeholder="com.game.gem500">
+        </div>
+        <div class="field">
+          <label>Android 商品ID</label>
+          <input id="f_android" placeholder="gem_500_android">
+        </div>
+        <div class="field">
+          <label>排序权重</label>
+          <input id="f_sort" type="number" placeholder="数字越小越靠前">
+        </div>
+        <div class="field">
+          <label>状态</label>
+          <select id="f_status">
+            <option value="on">上架</option>
+            <option value="off">下架</option>
+          </select>
+        </div>
+        <div class="preview" id="preview"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" id="cancelBtn">取消</button>
+        <button class="btn primary" id="saveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    const KEY = 'cmsProducts_v1';
+    const SYM = { USD:'$', CNY:'¥', EUR:'€' };
+    let products = [];
+    let editingId = null;
+
+    function save() { localStorage.setItem(KEY, JSON.stringify(products)); }
+    function load() {
+      try { const s = localStorage.getItem(KEY); if (s) { products = JSON.parse(s); return true; } } catch(e){}
+      return false;
+    }
+    function seed() {
+      products = [
+        { id:'gem_500',  name:'500 钻石礼包',  gems:500,  bonus:100, price:0.99, currency:'USD', type:'normal',       tag:'',     ios:'com.game.gem500',  android:'gem_500_android',  status:'on', sort:1 },
+        { id:'gem_1200', name:'1200 钻石礼包', gems:1200, bonus:300, price:1.99, currency:'USD', type:'normal',       tag:'热卖', ios:'com.game.gem1200', android:'gem_1200_android', status:'on', sort:2 },
+        { id:'gem_3000', name:'3000 钻石礼包', gems:3000, bonus:900, price:4.99, currency:'USD', type:'normal',       tag:'超值', ios:'com.game.gem3000', android:'gem_3000_android', status:'on', sort:3 },
+        { id:'first_1000', name:'首充 1000 钻石', gems:1000, bonus:0, price:0.99, currency:'USD', type:'first_charge', tag:'限量', ios:'com.game.first1000', android:'first_1000_android', status:'on', sort:0 },
+        { id:'vip_month', name:'月度会员', gems:0, bonus:0, price:9.99, currency:'USD', type:'subscription', tag:'订阅', ios:'com.game.vip.month', android:'vip_month_android', status:'off', sort:9 },
+      ];
+      save();
+    }
+
+    const tbody = document.getElementById('tbody');
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtPrice(p){ return (SYM[p.currency]||'') + Number(p.price).toFixed(2); }
+    function typeBadge(t){
+      if (t==='first_charge') return '<span class="badge first">限量首充</span>';
+      if (t==='subscription') return '<span class="badge sub">订阅</span>';
+      return '<span class="badge type">普通</span>';
+    }
+
+    function render() {
+      const kw = document.getElementById('searchInput').value.trim().toLowerCase();
+      const fs = document.getElementById('filterStatus').value;
+      const ft = document.getElementById('filterType').value;
+      let list = products.slice().sort((a,b)=>(a.sort??0)-(b.sort??0)).filter(p=>{
+        if (fs && p.status!==fs) return false;
+        if (ft && p.type!==ft) return false;
+        if (kw) { const hay=(p.id+' '+p.name+' '+(p.ios||'')+' '+(p.android||'')).toLowerCase(); if(!hay.includes(kw)) return false; }
+        return true;
+      });
+      tbody.innerHTML = list.map(p=>`
+        <tr>
+          <td>${p.sort??0}</td>
+          <td class="pid">${esc(p.id)}</td>
+          <td>${esc(p.name)}</td>
+          <td><span class="amt">${p.gems}💎</span>${p.bonus?`<span class="bonus">+${p.bonus}</span>`:''}</td>
+          <td class="price">${fmtPrice(p)}</td>
+          <td>${typeBadge(p.type)}</td>
+          <td class="tag-cell">${esc(p.tag||'-')}</td>
+          <td class="pid">iOS: ${esc(p.ios||'-')}<br>And: ${esc(p.android||'-')}</td>
+          <td><span class="badge ${p.status==='on'?'on':'off'}">${p.status==='on'?'上架':'下架'}</span></td>
+          <td class="row-actions">
+            <button class="btn sm" data-act="edit" data-id="${esc(p.id)}">编辑</button>
+            <button class="btn sm" data-act="toggle" data-id="${esc(p.id)}">${p.status==='on'?'下架':'上架'}</button>
+            <button class="btn sm danger" data-act="del" data-id="${esc(p.id)}">删除</button>
+          </td>
+        </tr>`).join('');
+      document.getElementById('emptyTip').style.display = list.length?'none':'block';
+      document.getElementById('stTotal').textContent = products.length;
+      document.getElementById('stOn').textContent = products.filter(p=>p.status==='on').length;
+      document.getElementById('stFirst').textContent = products.filter(p=>p.type==='first_charge').length;
+      const prices = products.map(p=>Number(p.price)).filter(n=>!isNaN(n));
+      document.getElementById('stPrice').textContent = prices.length?`$${Math.min(...prices).toFixed(2)} ~ $${Math.max(...prices).toFixed(2)}`:'-';
+    }
+
+    const mask = document.getElementById('mask');
+    const F = {
+      id:document.getElementById('f_id'), name:document.getElementById('f_name'),
+      gems:document.getElementById('f_gems'), bonus:document.getElementById('f_bonus'),
+      price:document.getElementById('f_price'), currency:document.getElementById('f_currency'),
+      type:document.getElementById('f_type'), tag:document.getElementById('f_tag'),
+      ios:document.getElementById('f_ios'), android:document.getElementById('f_android'),
+      sort:document.getElementById('f_sort'), status:document.getElementById('f_status'),
+    };
+    function openModal(p) {
+      editingId = p ? p.id : null;
+      document.getElementById('modalTitle').textContent = p ? '编辑商品' : '新增商品';
+      F.id.value = p?p.id:''; F.id.disabled = !!p;
+      F.name.value = p?p.name:''; F.gems.value = p?p.gems:''; F.bonus.value = p?(p.bonus||0):0;
+      F.price.value = p?p.price:''; F.currency.value = p?p.currency:'USD';
+      F.type.value = p?p.type:'normal'; F.tag.value = p?(p.tag||''):'';
+      F.ios.value = p?(p.ios||''):''; F.android.value = p?(p.android||''):'';
+      F.sort.value = p?(p.sort??products.length):products.length; F.status.value = p?p.status:'on';
+      clearErrors(); updatePreview(); mask.classList.add('show');
+    }
+    function closeModal(){ mask.classList.remove('show'); }
+    function clearErrors(){ document.querySelectorAll('.field.invalid').forEach(f=>f.classList.remove('invalid')); }
+    function updatePreview() {
+      const gems=+F.gems.value||0, bonus=+F.bonus.value||0, sym=SYM[F.currency.value]||'';
+      document.getElementById('preview').innerHTML =
+        `预览：<b>${esc(F.name.value||'(未命名)')}</b> · 到账 <b>${(gems+bonus).toLocaleString()}💎</b>`+
+        `（${gems}${bonus?` + 赠${bonus}`:''}） · 售价 <b>${sym}${(+F.price.value||0).toFixed(2)}</b>`;
+    }
+    ['input','change'].forEach(ev=>Object.values(F).forEach(el=>el.addEventListener(ev,updatePreview)));
+    function validate() {
+      clearErrors(); let ok=true; const mark=el=>{ el.closest('.field').classList.add('invalid'); ok=false; };
+      if(!F.id.value.trim()) mark(F.id);
+      else if(!editingId && products.some(p=>p.id===F.id.value.trim())) mark(F.id);
+      if(!F.name.value.trim()) mark(F.name);
+      if(F.gems.value===''||+F.gems.value<0) mark(F.gems);
+      if(F.price.value===''||+F.price.value<0) mark(F.price);
+      return ok;
+    }
+    function saveForm() {
+      if(!validate()) return;
+      const data = { id:F.id.value.trim(), name:F.name.value.trim(), gems:+F.gems.value, bonus:+F.bonus.value||0,
+        price:+F.price.value, currency:F.currency.value, type:F.type.value, tag:F.tag.value.trim(),
+        ios:F.ios.value.trim(), android:F.android.value.trim(),
+        sort:F.sort.value===''?products.length:+F.sort.value, status:F.status.value };
+      if(editingId){ const i=products.findIndex(p=>p.id===editingId); if(i>=0) products[i]=data; }
+      else products.push(data);
+      save(); render(); closeModal();
+    }
+
+    document.getElementById('addBtn').addEventListener('click', ()=>openModal(null));
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('saveBtn').addEventListener('click', saveForm);
+    mask.addEventListener('click', e=>{ if(e.target===mask) closeModal(); });
+    tbody.addEventListener('click', e=>{
+      const btn=e.target.closest('button[data-act]'); if(!btn) return;
+      const id=btn.dataset.id, p=products.find(x=>x.id===id);
+      if(btn.dataset.act==='edit') openModal(p);
+      else if(btn.dataset.act==='toggle'){ p.status=p.status==='on'?'off':'on'; save(); render(); }
+      else if(btn.dataset.act==='del'){ if(confirm(`确认删除商品「${p.name}」？`)){ products=products.filter(x=>x.id!==id); save(); render(); } }
+    });
+    ['searchInput','filterStatus','filterType'].forEach(id=>{
+      document.getElementById(id).addEventListener('input', render);
+      document.getElementById(id).addEventListener('change', render);
+    });
+    document.getElementById('openPay').addEventListener('click', ()=>window.open('index.html','_blank'));
+    document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('重置为示例商品？当前配置会丢失。')){ seed(); render(); } });
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      const blob=new Blob([JSON.stringify(products,null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cms-products.json'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    document.getElementById('importBtn').addEventListener('click', ()=>document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', e=>{
+      const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+      r.onload=()=>{ try{ const arr=JSON.parse(r.result); if(Array.isArray(arr)){ products=arr; save(); render(); } else alert('格式应为商品数组'); }catch(err){ alert('解析失败'); } };
+      r.readAsText(f); e.target.value='';
+    });
+
+    if(!load()) seed();
+    render();
+  })();
+  </script>
+</body>
+</html>
